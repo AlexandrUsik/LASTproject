@@ -14,17 +14,50 @@ from flask_login import current_user
 from forms.newsform import NewsForm
 from flask import abort
 from flask import request
-
+from PIL import Image
+from PyQt5.QtGui import QPixmap
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 login_manager = LoginManager()
 login_manager.init_app(app)
+MAX_FILE_SIZE = 1024 * 1024 + 1
+
+
+def scale_image(input_image_path,
+                output_image_path,
+                width=None,
+                height=None
+                ):
+    original_image = Image.open(input_image_path)
+    w, h = original_image.size
+    print('The original image size is {wide} wide x {height} '
+          'high'.format(wide=w, height=h))
+
+    if width and height:
+        max_size = (width, height)
+    elif width:
+        max_size = (width, h)
+    elif height:
+        max_size = (w, height)
+    else:
+        # No width or height specified
+        raise RuntimeError('Width or height required!')
+
+    original_image.thumbnail(max_size, Image.ANTIALIAS)
+    original_image.save(output_image_path)
+
+    scaled_image = Image.open(output_image_path)
+    width, height = scaled_image.size
+    print('The scaled image size is {wide} wide x {height} '
+          'high'.format(wide=width, height=height))
+
+
+number_of_img = 0
 
 
 def main():
     db_session.global_init("db/block.db")
-
     @login_manager.user_loader
     def load_user(user_id):
         db_sess = db_session.create_session()
@@ -88,11 +121,16 @@ def main():
     @login_required
     def add_news():
         form = NewsForm()
+        global number_of_img
         if form.validate_on_submit():
             db_sess = db_session.create_session()
             news = News()
             news.title = form.title.data
             news.content = form.content.data
+            im = request.files['file']
+            im.save(f"static/img/new_image{number_of_img}.jpg")
+            news.img = f"new_image{number_of_img}.jpg"
+            number_of_img += 1
             news.is_private = form.is_private.data
             current_user.news.append(news)
             db_sess.merge(current_user)
