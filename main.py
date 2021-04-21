@@ -1,3 +1,31 @@
+####################
+####################
+##############################################################
+################################################################
+##################################################################
+##################################################################
+#####            The app for photos                          ######
+#####    ############                ##########              ######
+#####    ############            ##################          ######
+#####     ###########         #########      #########       ######
+#####                        ######              ######      ######
+#####                      ######                  ######    ######
+#####                     #####                      ####    ######
+#####                     ####                       #####   ######
+#####                    #####                        ####   ######
+#####                    #####                        ####   ######
+#####                     ####                        ####   ######
+#####                     #####                      #####   ######
+#####                      #####                    #####    ######
+#####                       #####                  #####     ######
+#####                        #######            #######      ######
+#####                          ######################        ######
+#####                             ################           ######
+#####                                   ####                 ######
+#####                   GivVay                               ######
+###################################################################
+################################################################
+
 from flask import Flask
 from data import db_session
 from data.users import User
@@ -15,13 +43,12 @@ from forms.newsform import NewsForm
 from flask import abort
 from flask import request
 from PIL import Image
-from PyQt5.QtGui import QPixmap
+from random import randint
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'yandexlyceum_secret_key'
 login_manager = LoginManager()
 login_manager.init_app(app)
-MAX_FILE_SIZE = 1024 * 1024 + 1
 
 
 def scale_image(input_image_path,
@@ -31,8 +58,6 @@ def scale_image(input_image_path,
                 ):
     original_image = Image.open(input_image_path)
     w, h = original_image.size
-    print('The original image size is {wide} wide x {height} '
-          'high'.format(wide=w, height=h))
 
     if width and height:
         max_size = (width, height)
@@ -49,20 +74,17 @@ def scale_image(input_image_path,
 
     scaled_image = Image.open(output_image_path)
     width, height = scaled_image.size
-    print('The scaled image size is {wide} wide x {height} '
-          'high'.format(wide=width, height=height))
 
-
-number_of_img = 0
-
+# the main function
 
 def main():
     db_session.global_init("db/block.db")
+
     @login_manager.user_loader
     def load_user(user_id):
         db_sess = db_session.create_session()
         return db_sess.query(User).get(user_id)
-
+    # general function for home page
     @app.route("/")
     def index():
         db_sess = db_session.create_session()
@@ -73,6 +95,18 @@ def main():
             news = db_sess.query(News).filter(News.is_private != True)
         return render_template("index.html", news=news)
 
+    # function of profile ,where all photos of one person
+    @app.route('/profile')
+    def profile():
+        db_sess = db_session.create_session()
+        if current_user.is_authenticated:
+            news = db_sess.query(News).filter(
+                (News.user == current_user) | (News.is_private != True))
+        else:
+            news = db_sess.query(News).filter(News.is_private != True)
+        return render_template("profile.html", news=news)
+
+    # registration with form
     @app.route('/register', methods=['GET', 'POST'])
     def reqister():
         form = RegisterForm()
@@ -97,6 +131,7 @@ def main():
             return redirect('/login')
         return render_template('register.html', title='Регистрация', form=form)
 
+    # login of one person
     @app.route('/login', methods=['GET', 'POST'])
     def login():
         form = LoginForm()
@@ -117,20 +152,21 @@ def main():
         logout_user()
         return redirect("/")
 
+    # function for made new news
     @app.route('/news', methods=['GET', 'POST'])
     @login_required
     def add_news():
         form = NewsForm()
-        global number_of_img
         if form.validate_on_submit():
             db_sess = db_session.create_session()
             news = News()
             news.title = form.title.data
             news.content = form.content.data
-            im = request.files['file']
-            im.save(f"static/img/new_image{number_of_img}.jpg")
+            im = request.files['file'] # upload photo
+            number_of_img = randint(0, 10000000000)
+            im.save(f"static/img/new_image{number_of_img}.jpg") # save upload photo
             news.img = f"new_image{number_of_img}.jpg"
-            number_of_img += 1
+            im = None
             news.is_private = form.is_private.data
             current_user.news.append(news)
             db_sess.merge(current_user)
