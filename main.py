@@ -26,6 +26,7 @@
 ###################################################################
 ################################################################
 
+import os
 from flask import Flask
 from data import db_session
 from data.users import User
@@ -222,7 +223,8 @@ def main():
             abort(404)
         return redirect('/')
 
-    app.run()
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
 
 
 if __name__ == '__main__':
