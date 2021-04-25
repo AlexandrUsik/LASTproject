@@ -107,6 +107,16 @@ def main():
             news = db_sess.query(News).filter(News.is_private != True)
         return render_template("profile.html", news=news)
 
+    @app.route('/about')
+    def about():
+        db_sess = db_session.create_session()
+        if current_user.is_authenticated:
+            news = db_sess.query(News).filter(
+                (News.user == current_user) | (News.is_private != True))
+        else:
+            news = db_sess.query(News).filter(News.is_private != True)
+        return render_template("about.html", news=news)
+
     # registration with form
     @app.route('/register', methods=['GET', 'POST'])
     def reqister():

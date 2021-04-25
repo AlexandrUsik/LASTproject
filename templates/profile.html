@@ -2,16 +2,16 @@
 
 {% block content %}
 <div class="col-md6 border rounded">
-    <h1>My profile</h1>
-    <p><h2>Name:</h2> <h3>{{ current_user.name }}</h3></p>
-    <p><h2>About:</h2> <h3>{{ current_user.about }}</h3></p>
+    <h1 style="color: white">My profile</h1>
+    <p><h2 style="color: white">Name: {{ current_user.name }}</h2> </p>
+    <p><h2 style="color: white">About: {{ current_user.about }}</h2></p>
 </div>
 <div class="col-md6 border rounded">
-    <h2>Posts</h2>
+    <h2 style="color: white">Posts</h2>
     {% for item in news%}
         {% if current_user.is_authenticated %}
             {%if current_user == item.user %}
-            <div>
+            <div style="color: white">
                 {{item.content}}
             </div>
 
